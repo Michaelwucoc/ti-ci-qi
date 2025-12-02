@@ -11,6 +11,7 @@ class TeleprompterControl {
         this.content = '';
         this.currentScrollInfo = null;
         this.previewScale = 0.3; // 预览缩放比例（30%）
+        this.wordWrap = true; // 默认启用自动换行
 
         this.init();
     }
@@ -42,6 +43,7 @@ class TeleprompterControl {
         this.fontSizeDisplay = document.getElementById('font-size-display');
         this.lineHeightSlider = document.getElementById('line-height');
         this.lineHeightDisplay = document.getElementById('line-height-display');
+        this.wordWrapCheckbox = document.getElementById('word-wrap');
         
         // 语音控制
         this.voiceRecognitionCheckbox = document.getElementById('voice-recognition');
@@ -154,6 +156,12 @@ class TeleprompterControl {
             this.updatePreview();
         });
         
+        this.wordWrapCheckbox.addEventListener('change', (e) => {
+            this.wordWrap = e.target.checked;
+            this.sendMessage({ type: 'wordWrap', enabled: this.wordWrap });
+            this.updatePreview();
+        });
+        
         // 语音识别
         this.voiceRecognitionCheckbox.addEventListener('change', (e) => {
             if (e.target.checked) {
@@ -207,6 +215,19 @@ class TeleprompterControl {
         this.previewContent.style.lineHeight = this.lineHeight;
         this.previewContent.style.textAlign = 'left';
         this.previewContent.style.transform = 'none'; // 不使用transform，只用字号缩放
+        
+        // 应用自动换行设置
+        if (this.wordWrap) {
+            this.previewContent.style.wordWrap = 'break-word';
+            this.previewContent.style.wordBreak = 'break-word';
+            this.previewContent.style.whiteSpace = 'normal';
+            this.previewContent.style.overflowWrap = 'break-word';
+        } else {
+            this.previewContent.style.whiteSpace = 'nowrap';
+            this.previewContent.style.wordWrap = 'normal';
+            this.previewContent.style.wordBreak = 'normal';
+            this.previewContent.style.overflowWrap = 'normal';
+        }
         
         // 等待DOM更新后更新滚动指示器
         setTimeout(() => {
@@ -376,6 +397,7 @@ class TeleprompterControl {
         this.sendMessage({ type: 'fontSize', size: this.fontSize });
         this.sendMessage({ type: 'lineHeight', height: this.lineHeight });
         this.sendMessage({ type: 'scrollSpeed', speed: this.scrollSpeed });
+        this.sendMessage({ type: 'wordWrap', enabled: this.wordWrap });
         if (this.content) {
             this.sendMessage({ type: 'content', content: this.content });
         }

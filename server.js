@@ -65,7 +65,8 @@ let state = {
     fontSize: 48,
     lineHeight: 1.5,
     scrollSpeed: 30,
-    autoScroll: false
+    autoScroll: false,
+    wordWrap: true
 };
 
 wss.on('connection', (ws) => {
@@ -85,6 +86,7 @@ wss.on('connection', (ws) => {
                     sendToDisplay({ type: 'fontSize', size: state.fontSize });
                     sendToDisplay({ type: 'lineHeight', height: state.lineHeight });
                     sendToDisplay({ type: 'scrollSpeed', speed: state.scrollSpeed });
+                    sendToDisplay({ type: 'wordWrap', enabled: state.wordWrap });
                     if (state.autoScroll) {
                         sendToDisplay({ type: 'autoScroll', enabled: true });
                     }
@@ -140,6 +142,9 @@ function handleControlMessage(data) {
             break;
         case 'autoScroll':
             state.autoScroll = data.enabled;
+            break;
+        case 'wordWrap':
+            state.wordWrap = data.enabled;
             break;
     }
     

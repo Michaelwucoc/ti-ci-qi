@@ -9,6 +9,7 @@ class TeleprompterDisplay {
         this.ws = null;
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
+        this.wordWrap = true; // 默认启用自动换行
 
         this.init();
     }
@@ -20,6 +21,8 @@ class TeleprompterDisplay {
         this.setupFontControls();
         this.setupScrollTracking();
         this.loadSettings();
+        // 初始化时应用默认的自动换行设置
+        this.setWordWrap(this.wordWrap);
     }
 
     setupElements() {
@@ -108,6 +111,9 @@ class TeleprompterDisplay {
                     this.stopAutoScroll();
                 }
                 break;
+            case 'wordWrap':
+                this.setWordWrap(message.enabled);
+                break;
         }
     }
 
@@ -194,6 +200,21 @@ class TeleprompterDisplay {
 
     setLineHeight(height) {
         this.contentElement.style.lineHeight = height;
+    }
+
+    setWordWrap(enabled) {
+        this.wordWrap = enabled;
+        if (enabled) {
+            this.contentElement.style.wordWrap = 'break-word';
+            this.contentElement.style.wordBreak = 'break-word';
+            this.contentElement.style.whiteSpace = 'normal';
+            this.contentElement.style.overflowWrap = 'break-word';
+        } else {
+            this.contentElement.style.whiteSpace = 'nowrap';
+            this.contentElement.style.wordWrap = 'normal';
+            this.contentElement.style.wordBreak = 'normal';
+            this.contentElement.style.overflowWrap = 'normal';
+        }
     }
 
     setScrollSpeed(speed) {
