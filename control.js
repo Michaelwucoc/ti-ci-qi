@@ -10,6 +10,7 @@ class TeleprompterControl {
         this.lineHeight = 1.5;
         this.content = '';
         this.currentScrollInfo = null;
+        this.previewScale = 0.3; // 预览缩放比例（30%）
 
         this.init();
     }
@@ -199,9 +200,13 @@ class TeleprompterControl {
         } else {
             this.previewContent.innerHTML = paragraphs.map(p => `<p>${this.escapeHtml(p)}</p>`).join('');
         }
-        this.previewContent.style.fontSize = `${this.fontSize}px`;
+        
+        // 应用缩放比例，使预览显示为缩略图（通过字号缩放）
+        const scaledFontSize = this.fontSize * this.previewScale;
+        this.previewContent.style.fontSize = `${scaledFontSize}px`;
         this.previewContent.style.lineHeight = this.lineHeight;
         this.previewContent.style.textAlign = 'left';
+        this.previewContent.style.transform = 'none'; // 不使用transform，只用字号缩放
         
         // 等待DOM更新后更新滚动指示器
         setTimeout(() => {
@@ -222,8 +227,7 @@ class TeleprompterControl {
         
         const { scrollTop, scrollHeight, clientHeight } = this.currentScrollInfo;
         
-        // 计算预览面板的尺寸
-        const previewHeight = this.previewContent.clientHeight;
+        // 获取预览内容的实际尺寸（缩放前）
         const previewScrollHeight = this.previewContent.scrollHeight;
         
         if (previewScrollHeight === 0 || scrollHeight === 0) {
@@ -231,13 +235,15 @@ class TeleprompterControl {
             return;
         }
         
-        // 计算视口在完整文档中的比例
-        const viewportRatio = clientHeight / scrollHeight;
-        const scrollRatio = Math.min(Math.max(scrollTop / scrollHeight, 0), 1); // 限制在0-1之间
+        // 计算显示页面和预览页面的比例关系
+        // 显示页面的scrollHeight对应预览页面的scrollHeight（已缩放）
+        // 所以位置需要按比例映射
+        const scaleRatio = previewScrollHeight / scrollHeight;
         
-        // 计算高亮区域的位置和高度（相对于预览内容的实际高度）
-        const highlightTop = scrollRatio * previewScrollHeight;
-        const highlightHeight = Math.max(viewportRatio * previewScrollHeight, 30);
+        // 计算高亮区域在预览中的位置（基于显示页面的实际位置）
+        // 高亮区域对应显示页面的视口位置
+        const highlightTop = scrollTop * scaleRatio;
+        const highlightHeight = clientHeight * scaleRatio;
         
         // 移除旧的高亮指示器
         const existingIndicator = this.previewContent.querySelector('.scroll-indicator');
@@ -250,7 +256,7 @@ class TeleprompterControl {
             this.previewContent.style.position = 'relative';
         }
         
-        // 创建高亮指示器
+        // 创建高亮指示器（在缩放后的坐标系中）
         const indicator = document.createElement('div');
         indicator.className = 'scroll-indicator';
         indicator.style.position = 'absolute';
@@ -267,10 +273,14 @@ class TeleprompterControl {
         
         this.previewContent.appendChild(indicator);
         
+        // 获取预览容器的可见区域（考虑缩放）
+        const previewContainer = this.previewContent.parentElement;
+        const previewVisibleHeight = previewContainer ? previewContainer.clientHeight : 600;
+        const previewScrollTop = this.previewContent.scrollTop;
+        
         // 自动滚动预览，使高亮区域可见
         const indicatorBottom = highlightTop + highlightHeight;
-        const previewScrollTop = this.previewContent.scrollTop;
-        const previewVisibleBottom = previewScrollTop + previewHeight;
+        const previewVisibleBottom = previewScrollTop + previewVisibleHeight;
         
         if (highlightTop < previewScrollTop + 20) {
             // 高亮区域在可见区域上方，向上滚动
@@ -278,8 +288,8 @@ class TeleprompterControl {
         } else if (indicatorBottom > previewVisibleBottom - 20) {
             // 高亮区域在可见区域下方，向下滚动
             this.previewContent.scrollTop = Math.min(
-                previewScrollHeight - previewHeight,
-                indicatorBottom - previewHeight + 20
+                previewScrollHeight - previewVisibleHeight,
+                indicatorBottom - previewVisibleHeight + 20
             );
         }
     }
