@@ -6,9 +6,10 @@ class TeleprompterControl {
         this.isVoiceEnabled = false;
         this.autoScroll = false;
         this.scrollSpeed = 30;
-        this.fontSize = 24;
+        this.fontSize = 48;
         this.lineHeight = 1.5;
         this.content = '';
+        this.currentScrollInfo = null;
 
         this.init();
     }
@@ -99,6 +100,8 @@ class TeleprompterControl {
         // 处理来自服务器的消息
         if (message.type === 'content') {
             this.updatePreview(message.content);
+        } else if (message.type === 'scrollPosition') {
+            this.updateScrollIndicator(message);
         }
     }
 
@@ -191,9 +194,83 @@ class TeleprompterControl {
     updatePreview() {
         const content = this.contentInput.value || this.content;
         const paragraphs = content.split('\n').filter(p => p.trim());
-        this.previewContent.innerHTML = paragraphs.map(p => `<p>${this.escapeHtml(p)}</p>`).join('');
+        if (paragraphs.length === 0) {
+            this.previewContent.innerHTML = '<p>预览内容将显示在这里</p>';
+        } else {
+            this.previewContent.innerHTML = paragraphs.map(p => `<p>${this.escapeHtml(p)}</p>`).join('');
+        }
         this.previewContent.style.fontSize = `${this.fontSize}px`;
         this.previewContent.style.lineHeight = this.lineHeight;
+        this.previewContent.style.textAlign = 'left';
+        
+        // 重置滚动指示器
+        this.currentScrollInfo = null;
+        this.updateScrollIndicatorVisual();
+    }
+
+    updateScrollIndicator(scrollInfo) {
+        this.currentScrollInfo = scrollInfo;
+        this.updateScrollIndicatorVisual();
+    }
+
+    updateScrollIndicatorVisual() {
+        if (!this.currentScrollInfo || !this.previewContent) return;
+        
+        const { scrollTop, scrollHeight, clientHeight } = this.currentScrollInfo;
+        
+        // 计算预览面板的尺寸
+        const previewHeight = this.previewContent.clientHeight;
+        const previewScrollHeight = this.previewContent.scrollHeight;
+        
+        if (previewScrollHeight === 0 || scrollHeight === 0) return;
+        
+        // 计算视口在完整文档中的比例
+        const viewportRatio = clientHeight / scrollHeight;
+        const scrollRatio = scrollTop / scrollHeight;
+        
+        // 计算高亮区域的位置和高度
+        const highlightTop = scrollRatio * previewScrollHeight;
+        const highlightHeight = Math.max(viewportRatio * previewScrollHeight, 20);
+        
+        // 移除旧的高亮指示器
+        const existingIndicator = this.previewContent.querySelector('.scroll-indicator');
+        if (existingIndicator) {
+            existingIndicator.remove();
+        }
+        
+        // 创建高亮指示器
+        const indicator = document.createElement('div');
+        indicator.className = 'scroll-indicator';
+        indicator.style.position = 'absolute';
+        indicator.style.left = '0';
+        indicator.style.right = '0';
+        indicator.style.top = `${highlightTop}px`;
+        indicator.style.height = `${highlightHeight}px`;
+        indicator.style.border = '2px solid #4CAF50';
+        indicator.style.backgroundColor = 'rgba(76, 175, 80, 0.2)';
+        indicator.style.pointerEvents = 'none';
+        indicator.style.boxSizing = 'border-box';
+        indicator.style.zIndex = '10';
+        
+        // 确保预览容器是相对定位
+        if (getComputedStyle(this.previewContent).position === 'static') {
+            this.previewContent.style.position = 'relative';
+        }
+        
+        this.previewContent.appendChild(indicator);
+        
+        // 自动滚动预览，使高亮区域可见
+        const indicatorBottom = highlightTop + highlightHeight;
+        const previewScrollTop = this.previewContent.scrollTop;
+        const previewVisibleBottom = previewScrollTop + previewHeight;
+        
+        if (highlightTop < previewScrollTop + 20) {
+            // 高亮区域在可见区域上方，向上滚动
+            this.previewContent.scrollTop = Math.max(0, highlightTop - 20);
+        } else if (indicatorBottom > previewVisibleBottom - 20) {
+            // 高亮区域在可见区域下方，向下滚动
+            this.previewContent.scrollTop = indicatorBottom - previewHeight + 20;
+        }
     }
 
     escapeHtml(text) {

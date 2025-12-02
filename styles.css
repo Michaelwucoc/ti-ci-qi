@@ -6,31 +6,31 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    overflow: hidden;
 }
 
 /* 显示页面样式 */
 .display-page {
     background: #000;
     color: #fff;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
+    min-height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .display-container {
-    flex: 1;
+    min-height: 100vh;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
+    align-items: flex-start;
+    justify-content: flex-start;
     position: relative;
+    padding: 40px;
 }
 
 .teleprompter-content {
+    width: 100%;
     max-width: 90%;
-    text-align: center;
-    font-size: 24px;
+    text-align: left;
+    font-size: 48px;
     line-height: 1.5;
     transition: font-size 0.3s ease;
     padding: 20px;
@@ -167,8 +167,27 @@ body {
     min-height: 400px;
     max-height: 600px;
     overflow-y: auto;
-    font-size: 18px;
+    font-size: 48px;
     line-height: 1.5;
+    text-align: left;
+    position: relative;
+}
+
+.preview-content p {
+    margin: 20px 0;
+    opacity: 0.9;
+}
+
+.scroll-indicator {
+    position: absolute;
+    left: 0;
+    right: 0;
+    border: 2px solid #4CAF50;
+    background-color: rgba(76, 175, 80, 0.2);
+    pointer-events: none;
+    box-sizing: border-box;
+    z-index: 10;
+    transition: top 0.1s ease, height 0.1s ease;
 }
 
 section h2 {

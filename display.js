@@ -2,7 +2,7 @@
 class TeleprompterDisplay {
     constructor() {
         this.content = '';
-        this.fontSize = 24;
+        this.fontSize = 48;
         this.scrollSpeed = 30;
         this.isScrolling = false;
         this.scrollInterval = null;
@@ -18,6 +18,7 @@ class TeleprompterDisplay {
         this.setupWebSocket();
         this.setupKeyboardControls();
         this.setupFontControls();
+        this.setupScrollTracking();
         this.loadSettings();
     }
 
@@ -111,6 +112,24 @@ class TeleprompterDisplay {
         const paragraphs = content.split('\n').filter(p => p.trim());
         this.contentElement.innerHTML = paragraphs.map(p => `<p>${this.escapeHtml(p)}</p>`).join('');
         this.saveSettings();
+        
+        // 内容更新后发送滚动位置
+        if (this._originalUpdateContent) {
+            setTimeout(() => {
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                const scrollHeight = document.documentElement.scrollHeight;
+                const clientHeight = window.innerHeight;
+                
+                if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                    this.ws.send(JSON.stringify({
+                        type: 'scrollPosition',
+                        scrollTop: scrollTop,
+                        scrollHeight: scrollHeight,
+                        clientHeight: clientHeight
+                    }));
+                }
+            }, 300);
+        }
     }
 
     escapeHtml(text) {
@@ -227,7 +246,7 @@ class TeleprompterDisplay {
     }
 
     increaseFontSize() {
-        const newSize = Math.min(this.fontSize + 2, 72);
+        const newSize = Math.min(this.fontSize + 4, 120);
         this.setFontSize(newSize);
         if (this.ws && this.ws.readyState === WebSocket.OPEN) {
             this.ws.send(JSON.stringify({ type: 'fontSize', size: newSize }));
@@ -235,7 +254,7 @@ class TeleprompterDisplay {
     }
 
     decreaseFontSize() {
-        const newSize = Math.max(this.fontSize - 2, 12);
+        const newSize = Math.max(this.fontSize - 4, 24);
         this.setFontSize(newSize);
         if (this.ws && this.ws.readyState === WebSocket.OPEN) {
             this.ws.send(JSON.stringify({ type: 'fontSize', size: newSize }));
@@ -266,11 +285,56 @@ class TeleprompterDisplay {
         const saved = localStorage.getItem('teleprompter-settings');
         if (saved) {
             const settings = JSON.parse(saved);
-            this.setFontSize(settings.fontSize || 24);
+            this.setFontSize(settings.fontSize || 48);
             if (settings.content) {
                 this.updateContent(settings.content);
             }
+        } else {
+            // 设置默认字号
+            this.setFontSize(48);
         }
+    }
+
+    setupScrollTracking() {
+        // 定期发送滚动位置到服务器
+        let lastScrollTop = -1;
+        const sendScrollPosition = () => {
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollHeight = document.documentElement.scrollHeight;
+            const clientHeight = window.innerHeight;
+            
+            // 只有当滚动位置变化超过5px时才发送，减少通信频率
+            if (Math.abs(scrollTop - lastScrollTop) > 5 || scrollTop === 0) {
+                lastScrollTop = scrollTop;
+                
+                if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                    this.ws.send(JSON.stringify({
+                        type: 'scrollPosition',
+                        scrollTop: scrollTop,
+                        scrollHeight: scrollHeight,
+                        clientHeight: clientHeight
+                    }));
+                }
+            }
+        };
+
+        // 使用节流，每100ms检查一次
+        let scrollTimer = null;
+        window.addEventListener('scroll', () => {
+            if (scrollTimer) return;
+            scrollTimer = setTimeout(() => {
+                sendScrollPosition();
+                scrollTimer = null;
+            }, 100);
+        }, { passive: true });
+
+        // 页面加载完成后也发送一次
+        window.addEventListener('load', () => {
+            setTimeout(sendScrollPosition, 500);
+        });
+
+        // 保存原始的updateContent方法引用
+        this._originalUpdateContent = this.updateContent.bind(this);
     }
 }
 
