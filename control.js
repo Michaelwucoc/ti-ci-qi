@@ -294,24 +294,29 @@ class TeleprompterControl {
         
         this.previewContent.appendChild(indicator);
         
-        // 获取预览容器的可见区域（考虑缩放）
-        const previewContainer = this.previewContent.parentElement;
-        const previewVisibleHeight = previewContainer ? previewContainer.clientHeight : 600;
+        // 获取预览容器的可见区域
+        const previewVisibleHeight = this.previewContent.clientHeight;
         const previewScrollTop = this.previewContent.scrollTop;
         
-        // 自动滚动预览，使高亮区域可见
-        const indicatorBottom = highlightTop + highlightHeight;
-        const previewVisibleBottom = previewScrollTop + previewVisibleHeight;
+        // 自动滚动预览，使高亮区域始终跟随显示页面的滚动
+        // 计算高亮区域的中心位置
+        const indicatorCenter = highlightTop + highlightHeight / 2;
+        // 计算预览可见区域的中心位置
+        const previewVisibleCenter = previewScrollTop + previewVisibleHeight / 2;
         
-        if (highlightTop < previewScrollTop + 20) {
-            // 高亮区域在可见区域上方，向上滚动
-            this.previewContent.scrollTop = Math.max(0, highlightTop - 20);
-        } else if (indicatorBottom > previewVisibleBottom - 20) {
-            // 高亮区域在可见区域下方，向下滚动
-            this.previewContent.scrollTop = Math.min(
-                previewScrollHeight - previewVisibleHeight,
-                indicatorBottom - previewVisibleHeight + 20
-            );
+        // 计算目标滚动位置，使高亮区域中心对齐到预览可见区域中心
+        const targetScrollTop = indicatorCenter - previewVisibleHeight / 2;
+        
+        // 只有当目标位置与当前位置差距较大时才滚动（避免频繁滚动）
+        if (Math.abs(previewScrollTop - targetScrollTop) > 10) {
+            // 使用平滑滚动，让高亮区域跟随显示页面
+            this.previewContent.scrollTo({
+                top: Math.max(0, Math.min(
+                    previewScrollHeight - previewVisibleHeight,
+                    targetScrollTop
+                )),
+                behavior: 'smooth'
+            });
         }
     }
 
