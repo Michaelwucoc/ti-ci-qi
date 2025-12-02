@@ -92,6 +92,10 @@ wss.on('connection', (ws) => {
                     clients.control = ws;
                     console.log('控制页面已连接');
                 }
+            } else if (data.type === 'scrollPosition' && clients.display === ws) {
+                // 来自显示页面的滚动位置消息，直接转发到控制页面
+                console.log('转发滚动位置到控制页面:', data);
+                handleDisplayMessage(data);
             } else if (data.role === 'control' || clients.control === ws) {
                 // 来自控制页面的消息，转发到显示页面
                 handleControlMessage(data);

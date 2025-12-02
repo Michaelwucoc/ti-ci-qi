@@ -47,6 +47,10 @@ class TeleprompterDisplay {
                 this.updateConnectionStatus(true);
                 this.reconnectAttempts = 0;
                 this.ws.send(JSON.stringify({ type: 'register', role: 'display' }));
+                // 连接建立后立即发送一次滚动位置
+                setTimeout(() => {
+                    this.sendScrollPosition();
+                }, 500);
             };
 
             this.ws.onmessage = (event) => {
@@ -114,22 +118,11 @@ class TeleprompterDisplay {
         this.saveSettings();
         
         // 内容更新后发送滚动位置
-        if (this._originalUpdateContent) {
-            setTimeout(() => {
-                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-                const scrollHeight = document.documentElement.scrollHeight;
-                const clientHeight = window.innerHeight;
-                
-                if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-                    this.ws.send(JSON.stringify({
-                        type: 'scrollPosition',
-                        scrollTop: scrollTop,
-                        scrollHeight: scrollHeight,
-                        clientHeight: clientHeight
-                    }));
-                }
-            }, 300);
-        }
+        setTimeout(() => {
+            if (this.sendScrollPosition) {
+                this.sendScrollPosition();
+            }
+        }, 300);
     }
 
     escapeHtml(text) {
@@ -298,7 +291,9 @@ class TeleprompterDisplay {
     setupScrollTracking() {
         // 定期发送滚动位置到服务器
         let lastScrollTop = -1;
-        const sendScrollPosition = () => {
+        
+        // 将sendScrollPosition方法绑定到this，以便在onopen中调用
+        this.sendScrollPosition = () => {
             const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
             const scrollHeight = document.documentElement.scrollHeight;
             const clientHeight = window.innerHeight;
@@ -308,12 +303,16 @@ class TeleprompterDisplay {
                 lastScrollTop = scrollTop;
                 
                 if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-                    this.ws.send(JSON.stringify({
+                    const message = {
                         type: 'scrollPosition',
                         scrollTop: scrollTop,
                         scrollHeight: scrollHeight,
                         clientHeight: clientHeight
-                    }));
+                    };
+                    this.ws.send(JSON.stringify(message));
+                    console.log('发送滚动位置:', message);
+                } else {
+                    console.warn('WebSocket未连接，无法发送滚动位置');
                 }
             }
         };
@@ -323,18 +322,19 @@ class TeleprompterDisplay {
         window.addEventListener('scroll', () => {
             if (scrollTimer) return;
             scrollTimer = setTimeout(() => {
-                sendScrollPosition();
+                this.sendScrollPosition();
                 scrollTimer = null;
             }, 100);
         }, { passive: true });
 
         // 页面加载完成后也发送一次
         window.addEventListener('load', () => {
-            setTimeout(sendScrollPosition, 500);
+            setTimeout(() => {
+                if (this.sendScrollPosition) {
+                    this.sendScrollPosition();
+                }
+            }, 500);
         });
-
-        // 保存原始的updateContent方法引用
-        this._originalUpdateContent = this.updateContent.bind(this);
     }
 }
 

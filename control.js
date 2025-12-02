@@ -203,12 +203,16 @@ class TeleprompterControl {
         this.previewContent.style.lineHeight = this.lineHeight;
         this.previewContent.style.textAlign = 'left';
         
-        // 重置滚动指示器
-        this.currentScrollInfo = null;
-        this.updateScrollIndicatorVisual();
+        // 等待DOM更新后更新滚动指示器
+        setTimeout(() => {
+            if (this.currentScrollInfo) {
+                this.updateScrollIndicatorVisual();
+            }
+        }, 50);
     }
 
     updateScrollIndicator(scrollInfo) {
+        console.log('收到滚动位置信息:', scrollInfo);
         this.currentScrollInfo = scrollInfo;
         this.updateScrollIndicatorVisual();
     }
@@ -222,20 +226,28 @@ class TeleprompterControl {
         const previewHeight = this.previewContent.clientHeight;
         const previewScrollHeight = this.previewContent.scrollHeight;
         
-        if (previewScrollHeight === 0 || scrollHeight === 0) return;
+        if (previewScrollHeight === 0 || scrollHeight === 0) {
+            console.log('预览高度为0，跳过更新', { previewScrollHeight, scrollHeight });
+            return;
+        }
         
         // 计算视口在完整文档中的比例
         const viewportRatio = clientHeight / scrollHeight;
-        const scrollRatio = scrollTop / scrollHeight;
+        const scrollRatio = Math.min(Math.max(scrollTop / scrollHeight, 0), 1); // 限制在0-1之间
         
-        // 计算高亮区域的位置和高度
+        // 计算高亮区域的位置和高度（相对于预览内容的实际高度）
         const highlightTop = scrollRatio * previewScrollHeight;
-        const highlightHeight = Math.max(viewportRatio * previewScrollHeight, 20);
+        const highlightHeight = Math.max(viewportRatio * previewScrollHeight, 30);
         
         // 移除旧的高亮指示器
         const existingIndicator = this.previewContent.querySelector('.scroll-indicator');
         if (existingIndicator) {
             existingIndicator.remove();
+        }
+        
+        // 确保预览容器是相对定位
+        if (getComputedStyle(this.previewContent).position === 'static') {
+            this.previewContent.style.position = 'relative';
         }
         
         // 创建高亮指示器
@@ -251,11 +263,7 @@ class TeleprompterControl {
         indicator.style.pointerEvents = 'none';
         indicator.style.boxSizing = 'border-box';
         indicator.style.zIndex = '10';
-        
-        // 确保预览容器是相对定位
-        if (getComputedStyle(this.previewContent).position === 'static') {
-            this.previewContent.style.position = 'relative';
-        }
+        indicator.style.transition = 'top 0.1s ease, height 0.1s ease';
         
         this.previewContent.appendChild(indicator);
         
@@ -269,7 +277,10 @@ class TeleprompterControl {
             this.previewContent.scrollTop = Math.max(0, highlightTop - 20);
         } else if (indicatorBottom > previewVisibleBottom - 20) {
             // 高亮区域在可见区域下方，向下滚动
-            this.previewContent.scrollTop = indicatorBottom - previewHeight + 20;
+            this.previewContent.scrollTop = Math.min(
+                previewScrollHeight - previewHeight,
+                indicatorBottom - previewHeight + 20
+            );
         }
     }
 
