@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>提词器 - 显示页面</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="display-page">
+    <div class="display-container">
+        <div id="teleprompter-content" class="teleprompter-content">
+            <p>欢迎使用提词器！</p>
+            <p>请在管理页面输入您的内容。</p>
+            <p>您可以使用快捷键控制滚动：</p>
+            <p>↑ 向上滚动</p>
+            <p>↓ 向下滚动</p>
+            <p>空格键 暂停/继续</p>
+            <p>+ 增大字号</p>
+            <p>- 减小字号</p>
+        </div>
+    </div>
+    
+    <div class="display-controls">
+        <div class="font-size-control">
+            <button id="font-decrease">-</button>
+            <span id="font-size-display">24px</span>
+            <button id="font-increase">+</button>
+        </div>
+        <div class="status-indicator">
+            <span id="connection-status" class="status-dot disconnected"></span>
+            <span id="status-text">未连接</span>
+        </div>
+    </div>
+
+    <script src="display.js"></script>
+</body>
+</html>
+
