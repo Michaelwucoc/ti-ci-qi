@@ -20,6 +20,7 @@ class TeleprompterDisplay {
         this.setupKeyboardControls();
         this.setupFontControls();
         this.setupScrollTracking();
+        this.setupControlsAutoHide();
         this.loadSettings();
         // 初始化时应用默认的自动换行设置
         this.setWordWrap(this.wordWrap);
@@ -32,6 +33,8 @@ class TeleprompterDisplay {
         this.statusText = document.getElementById('status-text');
         this.fontIncreaseBtn = document.getElementById('font-increase');
         this.fontDecreaseBtn = document.getElementById('font-decrease');
+        this.displayControls = document.querySelector('.display-controls');
+        this.hideControlsTimer = null;
     }
 
     setupWebSocket() {
@@ -356,6 +359,53 @@ class TeleprompterDisplay {
                 }
             }, 500);
         });
+    }
+
+    setupControlsAutoHide() {
+        if (!this.displayControls) return;
+
+        // 鼠标移动到右下角区域时显示控制
+        const showControls = () => {
+            if (this.hideControlsTimer) {
+                clearTimeout(this.hideControlsTimer);
+                this.hideControlsTimer = null;
+            }
+            this.displayControls.classList.add('visible');
+        };
+
+        // 鼠标移开时延迟隐藏
+        const hideControls = () => {
+            if (this.hideControlsTimer) {
+                clearTimeout(this.hideControlsTimer);
+            }
+            this.hideControlsTimer = setTimeout(() => {
+                this.displayControls.classList.remove('visible');
+            }, 2000); // 2秒后隐藏
+        };
+
+        // 监听鼠标移动到右下角区域（右下角200x200像素区域）
+        document.addEventListener('mousemove', (e) => {
+            const rightEdge = window.innerWidth - 200;
+            const bottomEdge = window.innerHeight - 200;
+            
+            if (e.clientX >= rightEdge && e.clientY >= bottomEdge) {
+                showControls();
+            } else {
+                // 如果鼠标在控制面板上，保持显示
+                if (this.displayControls && this.displayControls.matches(':hover')) {
+                    showControls();
+                } else {
+                    hideControls();
+                }
+            }
+        });
+
+        // 鼠标悬停在控制面板上时保持显示
+        this.displayControls.addEventListener('mouseenter', showControls);
+        this.displayControls.addEventListener('mouseleave', hideControls);
+
+        // 初始状态：隐藏控制面板
+        this.displayControls.classList.remove('visible');
     }
 }
 

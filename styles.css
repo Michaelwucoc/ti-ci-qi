@@ -24,16 +24,18 @@ body {
     justify-content: flex-start;
     position: relative;
     padding: 40px;
+    padding-right: 20px;
 }
 
 .teleprompter-content {
     width: 100%;
-    max-width: 90%;
+    max-width: 98%;
     text-align: left;
     font-size: 48px;
     line-height: 1.5;
     transition: font-size 0.3s ease;
     padding: 20px;
+    padding-right: 10px;
 }
 
 .teleprompter-content p {
@@ -51,6 +53,17 @@ body {
     background: rgba(0, 0, 0, 0.7);
     padding: 10px 20px;
     border-radius: 8px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.display-controls.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
 }
 
 .font-size-control {

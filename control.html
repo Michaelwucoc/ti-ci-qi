@@ -79,6 +79,28 @@
                         <button id="stop-voice" class="btn-control">⏹ 停止识别</button>
                     </div>
                 </section>
+
+                <section class="cache-controls">
+                    <h2>缓存管理</h2>
+                    <div class="control-group">
+                        <label>缓存名称：</label>
+                        <input type="text" id="cache-name" placeholder="输入缓存名称" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <div class="control-buttons">
+                        <button id="save-cache" class="btn-primary">💾 保存缓存</button>
+                        <button id="load-cache" class="btn-control">📂 加载缓存</button>
+                    </div>
+                    <div class="cache-list-container" style="margin-top: 15px;">
+                        <label style="display: block; margin-bottom: 10px; color: #666; font-size: 14px;">已保存的缓存：</label>
+                        <select id="cache-list" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                            <option value="">-- 选择缓存 --</option>
+                        </select>
+                        <div class="cache-actions" style="display: flex; gap: 10px; margin-top: 10px;">
+                            <button id="delete-cache" class="btn-secondary" style="flex: 1;">🗑️ 删除选中</button>
+                            <button id="rename-cache" class="btn-secondary" style="flex: 1;">✏️ 重命名</button>
+                        </div>
+                    </div>
+                </section>
             </div>
 
             <div class="preview-panel">

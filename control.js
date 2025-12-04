@@ -12,6 +12,7 @@ class TeleprompterControl {
         this.currentScrollInfo = null;
         this.previewScale = 0.3; // 预览缩放比例（30%）
         this.wordWrap = true; // 默认启用自动换行
+        this.caches = {}; // 缓存数据
 
         this.init();
     }
@@ -20,6 +21,8 @@ class TeleprompterControl {
         this.setupElements();
         this.setupWebSocket();
         this.setupEventListeners();
+        this.loadCaches();
+        this.updateCacheList();
         this.loadContent();
     }
 
@@ -57,6 +60,14 @@ class TeleprompterControl {
         // 连接状态
         this.connectionStatus = document.getElementById('control-connection-status');
         this.statusText = document.getElementById('control-status-text');
+        
+        // 缓存控制
+        this.cacheNameInput = document.getElementById('cache-name');
+        this.saveCacheBtn = document.getElementById('save-cache');
+        this.loadCacheBtn = document.getElementById('load-cache');
+        this.cacheList = document.getElementById('cache-list');
+        this.deleteCacheBtn = document.getElementById('delete-cache');
+        this.renameCacheBtn = document.getElementById('rename-cache');
     }
 
     setupWebSocket() {
@@ -182,6 +193,18 @@ class TeleprompterControl {
         // 内容输入变化时更新预览
         this.contentInput.addEventListener('input', () => {
             this.updatePreview();
+        });
+        
+        // 缓存控制
+        this.saveCacheBtn.addEventListener('click', () => this.saveCache());
+        this.loadCacheBtn.addEventListener('click', () => this.loadCache());
+        this.deleteCacheBtn.addEventListener('click', () => this.deleteCache());
+        this.renameCacheBtn.addEventListener('click', () => this.renameCache());
+        this.cacheList.addEventListener('change', () => {
+            const selectedName = this.cacheList.value;
+            if (selectedName) {
+                this.cacheNameInput.value = selectedName;
+            }
         });
     }
 
@@ -431,6 +454,176 @@ class TeleprompterControl {
             this.contentInput.value = saved;
             this.updatePreview();
         }
+    }
+
+    // 缓存管理功能
+    loadCaches() {
+        const saved = localStorage.getItem('teleprompter-caches');
+        if (saved) {
+            try {
+                this.caches = JSON.parse(saved);
+            } catch (e) {
+                console.error('加载缓存失败:', e);
+                this.caches = {};
+            }
+        } else {
+            this.caches = {};
+        }
+    }
+
+    saveCaches() {
+        localStorage.setItem('teleprompter-caches', JSON.stringify(this.caches));
+    }
+
+    updateCacheList() {
+        this.cacheList.innerHTML = '<option value="">-- 选择缓存 --</option>';
+        const cacheNames = Object.keys(this.caches).sort();
+        cacheNames.forEach(name => {
+            const option = document.createElement('option');
+            option.value = name;
+            option.textContent = name;
+            this.cacheList.appendChild(option);
+        });
+    }
+
+    saveCache() {
+        const cacheName = this.cacheNameInput.value.trim();
+        if (!cacheName) {
+            alert('请输入缓存名称');
+            return;
+        }
+
+        // 保存当前所有设置和内容
+        const cacheData = {
+            name: cacheName,
+            content: this.contentInput.value,
+            fontSize: this.fontSize,
+            lineHeight: this.lineHeight,
+            scrollSpeed: this.scrollSpeed,
+            autoScroll: this.autoScroll,
+            wordWrap: this.wordWrap,
+            savedAt: new Date().toISOString()
+        };
+
+        this.caches[cacheName] = cacheData;
+        this.saveCaches();
+        this.updateCacheList();
+        
+        // 选中刚保存的缓存
+        this.cacheList.value = cacheName;
+        
+        alert(`缓存 "${cacheName}" 已保存！`);
+    }
+
+    loadCache() {
+        const cacheName = this.cacheList.value || this.cacheNameInput.value.trim();
+        if (!cacheName) {
+            alert('请选择或输入缓存名称');
+            return;
+        }
+
+        const cacheData = this.caches[cacheName];
+        if (!cacheData) {
+            alert(`缓存 "${cacheName}" 不存在`);
+            return;
+        }
+
+        // 确认是否覆盖当前内容
+        if (this.contentInput.value && !confirm('加载缓存将覆盖当前内容，是否继续？')) {
+            return;
+        }
+
+        // 恢复内容
+        this.content = cacheData.content || '';
+        this.contentInput.value = this.content;
+        
+        // 恢复设置
+        this.fontSize = cacheData.fontSize || 48;
+        this.lineHeight = cacheData.lineHeight || 1.5;
+        this.scrollSpeed = cacheData.scrollSpeed || 30;
+        this.autoScroll = cacheData.autoScroll || false;
+        this.wordWrap = cacheData.wordWrap !== undefined ? cacheData.wordWrap : true;
+
+        // 更新UI
+        this.fontSizeSlider.value = this.fontSize;
+        this.fontSizeDisplay.textContent = `${this.fontSize}px`;
+        this.lineHeightSlider.value = this.lineHeight;
+        this.lineHeightDisplay.textContent = this.lineHeight;
+        this.scrollSpeedSlider.value = this.scrollSpeed;
+        this.speedDisplay.textContent = this.scrollSpeed;
+        this.autoScrollCheckbox.checked = this.autoScroll;
+        this.wordWrapCheckbox.checked = this.wordWrap;
+        this.cacheNameInput.value = cacheName;
+
+        // 同步到显示页面
+        this.updateContent();
+        this.syncSettings();
+
+        alert(`缓存 "${cacheName}" 已加载！`);
+    }
+
+    deleteCache() {
+        const cacheName = this.cacheList.value || this.cacheNameInput.value.trim();
+        if (!cacheName) {
+            alert('请选择或输入要删除的缓存名称');
+            return;
+        }
+
+        if (!this.caches[cacheName]) {
+            alert(`缓存 "${cacheName}" 不存在`);
+            return;
+        }
+
+        if (!confirm(`确定要删除缓存 "${cacheName}" 吗？此操作不可恢复。`)) {
+            return;
+        }
+
+        delete this.caches[cacheName];
+        this.saveCaches();
+        this.updateCacheList();
+        this.cacheNameInput.value = '';
+        this.cacheList.value = '';
+        
+        alert(`缓存 "${cacheName}" 已删除`);
+    }
+
+    renameCache() {
+        const oldName = this.cacheList.value || this.cacheNameInput.value.trim();
+        if (!oldName) {
+            alert('请选择或输入要重命名的缓存名称');
+            return;
+        }
+
+        if (!this.caches[oldName]) {
+            alert(`缓存 "${oldName}" 不存在`);
+            return;
+        }
+
+        const newName = prompt(`请输入新的缓存名称（当前名称：${oldName}）:`, oldName);
+        if (!newName || newName.trim() === '') {
+            return;
+        }
+
+        const trimmedNewName = newName.trim();
+        if (trimmedNewName === oldName) {
+            return;
+        }
+
+        if (this.caches[trimmedNewName]) {
+            alert(`缓存名称 "${trimmedNewName}" 已存在，请使用其他名称`);
+            return;
+        }
+
+        // 重命名缓存
+        this.caches[trimmedNewName] = this.caches[oldName];
+        this.caches[trimmedNewName].name = trimmedNewName;
+        delete this.caches[oldName];
+        this.saveCaches();
+        this.updateCacheList();
+        this.cacheNameInput.value = trimmedNewName;
+        this.cacheList.value = trimmedNewName;
+        
+        alert(`缓存已从 "${oldName}" 重命名为 "${trimmedNewName}"`);
     }
 }
 
