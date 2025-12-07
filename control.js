@@ -6,7 +6,7 @@ class TeleprompterControl {
         this.isVoiceEnabled = false;
         this.autoScroll = false;
         this.scrollSpeed = 30;
-        this.fontSize = 48;
+        this.fontSize = 80;
         this.lineHeight = 1.5;
         this.content = '';
         this.currentScrollInfo = null;
@@ -218,6 +218,25 @@ class TeleprompterControl {
             const selectedName = this.cacheList.value;
             if (selectedName) {
                 this.cacheNameInput.value = selectedName;
+            }
+        });
+        
+        // 键盘事件：Space键向下翻一行
+        document.addEventListener('keydown', (e) => {
+            // 如果焦点在输入框或文本框中，不触发
+            const activeElement = document.activeElement;
+            if (activeElement && (
+                activeElement.tagName === 'INPUT' || 
+                activeElement.tagName === 'TEXTAREA' ||
+                activeElement.isContentEditable
+            )) {
+                return;
+            }
+            
+            // Space键向下翻一行
+            if (e.code === 'Space' || e.key === ' ') {
+                e.preventDefault();
+                this.sendMessage({ type: 'scroll', action: 'downLine' });
             }
         });
     }
@@ -552,7 +571,7 @@ class TeleprompterControl {
         this.contentInput.value = this.content;
         
         // 恢复设置
-        this.fontSize = cacheData.fontSize || 48;
+        this.fontSize = cacheData.fontSize || 80;
         this.lineHeight = cacheData.lineHeight || 1.5;
         this.scrollSpeed = cacheData.scrollSpeed || 30;
         this.autoScroll = cacheData.autoScroll || false;

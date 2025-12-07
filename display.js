@@ -2,7 +2,8 @@
 class TeleprompterDisplay {
     constructor() {
         this.content = '';
-        this.fontSize = 48;
+        this.fontSize = 80;
+        this.lineHeight = 1.5;
         this.scrollSpeed = 30;
         this.isScrolling = false;
         this.scrollInterval = null;
@@ -148,6 +149,9 @@ class TeleprompterDisplay {
             case 'down':
                 this.scrollDown();
                 break;
+            case 'downLine':
+                this.scrollDownLine();
+                break;
             case 'pause':
                 this.toggleScroll();
                 break;
@@ -163,6 +167,12 @@ class TeleprompterDisplay {
 
     scrollDown() {
         window.scrollBy({ top: 100, behavior: 'smooth' });
+    }
+
+    scrollDownLine() {
+        // 计算一行的高度：字号 * 行高
+        const lineHeight = this.fontSize * this.lineHeight;
+        window.scrollBy({ top: lineHeight, behavior: 'smooth' });
     }
 
     toggleScroll() {
@@ -202,6 +212,7 @@ class TeleprompterDisplay {
     }
 
     setLineHeight(height) {
+        this.lineHeight = height;
         this.contentElement.style.lineHeight = height;
     }
 
@@ -302,13 +313,13 @@ class TeleprompterDisplay {
         const saved = localStorage.getItem('teleprompter-settings');
         if (saved) {
             const settings = JSON.parse(saved);
-            this.setFontSize(settings.fontSize || 48);
+            this.setFontSize(settings.fontSize || 80);
             if (settings.content) {
                 this.updateContent(settings.content);
             }
         } else {
             // 设置默认字号
-            this.setFontSize(48);
+            this.setFontSize(80);
         }
     }
 

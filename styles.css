@@ -31,7 +31,7 @@ body {
     width: 100%;
     max-width: 98%;
     text-align: left;
-    font-size: 48px;
+    font-size: 80px;
     line-height: 1.5;
     transition: font-size 0.3s ease;
     padding: 20px;
@@ -182,7 +182,7 @@ body {
     max-height: 900px;
     overflow-y: auto;
     overflow-x: hidden;
-    font-size: 48px;
+    font-size: 80px;
     line-height: 1.5;
     text-align: left;
     position: relative;
