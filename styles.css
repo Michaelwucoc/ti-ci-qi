@@ -143,6 +143,7 @@ body {
     gap: 8px;
 }
 
+/* 桌面端：预览在右边（默认布局） */
 .control-main {
     display: grid;
     grid-template-columns: 1fr 1.2fr;
@@ -299,9 +300,19 @@ button {
     transform: scale(0.95);
 }
 
+/* iPad和手机：预览在操作上面 */
 @media (max-width: 1024px) {
     .control-main {
         grid-template-columns: 1fr;
+    }
+    
+    .preview-panel {
+        order: -1;
+        margin-bottom: 20px;
+    }
+    
+    .control-panel {
+        order: 1;
     }
 }
 
