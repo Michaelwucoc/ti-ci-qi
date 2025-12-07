@@ -6,7 +6,7 @@ class TeleprompterControl {
         this.isVoiceEnabled = false;
         this.autoScroll = false;
         this.scrollSpeed = 30;
-        this.fontSize = 80;
+        this.fontSize = 120;
         this.lineHeight = 2.5;
         this.content = '';
         this.currentScrollInfo = null;
@@ -571,7 +571,7 @@ class TeleprompterControl {
         this.contentInput.value = this.content;
         
         // 恢复设置
-        this.fontSize = cacheData.fontSize || 80;
+        this.fontSize = cacheData.fontSize || 120;
         this.lineHeight = cacheData.lineHeight || 2.5;
         this.scrollSpeed = cacheData.scrollSpeed || 30;
         this.autoScroll = cacheData.autoScroll || false;

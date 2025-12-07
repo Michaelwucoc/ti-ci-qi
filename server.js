@@ -137,7 +137,7 @@ const clients = {
 // 存储当前状态
 let state = {
     content: '',
-    fontSize: 80,
+    fontSize: 120,
     lineHeight: 2.5,
     scrollSpeed: 30,
     autoScroll: false,

@@ -2,7 +2,7 @@
 class TeleprompterDisplay {
     constructor() {
         this.content = '';
-        this.fontSize = 80;
+        this.fontSize = 120;
         this.lineHeight = 2.5;
         this.scrollSpeed = 30;
         this.isScrolling = false;
@@ -274,7 +274,7 @@ class TeleprompterDisplay {
     }
 
     increaseFontSize() {
-        const newSize = Math.min(this.fontSize + 4, 120);
+        const newSize = Math.min(this.fontSize + 4, 240);
         this.setFontSize(newSize);
         if (this.ws && this.ws.readyState === WebSocket.OPEN) {
             this.ws.send(JSON.stringify({ type: 'fontSize', size: newSize }));
@@ -282,7 +282,7 @@ class TeleprompterDisplay {
     }
 
     decreaseFontSize() {
-        const newSize = Math.max(this.fontSize - 4, 24);
+        const newSize = Math.max(this.fontSize - 4, 80);
         this.setFontSize(newSize);
         if (this.ws && this.ws.readyState === WebSocket.OPEN) {
             this.ws.send(JSON.stringify({ type: 'fontSize', size: newSize }));
@@ -313,13 +313,13 @@ class TeleprompterDisplay {
         const saved = localStorage.getItem('teleprompter-settings');
         if (saved) {
             const settings = JSON.parse(saved);
-            this.setFontSize(settings.fontSize || 80);
+            this.setFontSize(settings.fontSize || 120);
             if (settings.content) {
                 this.updateContent(settings.content);
             }
         } else {
             // 设置默认字号
-            this.setFontSize(80);
+            this.setFontSize(120);
         }
     }
 
