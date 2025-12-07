@@ -182,8 +182,6 @@ body {
     max-height: 900px;
     overflow-y: auto;
     overflow-x: hidden;
-    font-size: 120px;
-    line-height: 2.2;
     text-align: left;
     position: relative;
 }
@@ -298,6 +296,13 @@ button {
 
 .btn-control:active {
     transform: scale(0.95);
+}
+
+.scroll-down-large {
+    font-size: 20px;
+    padding: 15px 30px;
+    min-width: 120px;
+    font-weight: bold;
 }
 
 /* iPad和手机：预览在操作上面 */

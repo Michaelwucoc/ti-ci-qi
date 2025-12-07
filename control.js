@@ -2,8 +2,6 @@
 class TeleprompterControl {
     constructor() {
         this.ws = null;
-        this.voiceRecognition = null;
-        this.isVoiceEnabled = false;
         this.autoScroll = false;
         this.scrollSpeed = 30;
         this.fontSize = 120;
@@ -52,12 +50,6 @@ class TeleprompterControl {
         this.lineHeightSlider = document.getElementById('line-height');
         this.lineHeightDisplay = document.getElementById('line-height-display');
         this.wordWrapCheckbox = document.getElementById('word-wrap');
-        
-        // 语音控制
-        this.voiceRecognitionCheckbox = document.getElementById('voice-recognition');
-        this.voiceStatus = document.getElementById('voice-status');
-        this.startVoiceBtn = document.getElementById('start-voice');
-        this.stopVoiceBtn = document.getElementById('stop-voice');
         
         // 预览
         this.previewContent = document.getElementById('preview-content');
@@ -176,23 +168,6 @@ class TeleprompterControl {
             this.wordWrap = e.target.checked;
             this.sendMessage({ type: 'wordWrap', enabled: this.wordWrap });
             this.updatePreview();
-        });
-        
-        // 语音识别
-        this.voiceRecognitionCheckbox.addEventListener('change', (e) => {
-            if (e.target.checked) {
-                this.initVoiceRecognition();
-            } else {
-                this.stopVoiceRecognition();
-            }
-        });
-        
-        this.startVoiceBtn.addEventListener('click', () => {
-            this.startVoiceRecognition();
-        });
-        
-        this.stopVoiceBtn.addEventListener('click', () => {
-            this.stopVoiceRecognition();
         });
         
         // 内容输入变化时更新预览
@@ -380,69 +355,6 @@ class TeleprompterControl {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
-    }
-
-    initVoiceRecognition() {
-        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-            alert('您的浏览器不支持语音识别功能');
-            this.voiceRecognitionCheckbox.checked = false;
-            return;
-        }
-
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        this.voiceRecognition = new SpeechRecognition();
-        this.voiceRecognition.lang = 'zh-CN';
-        this.voiceRecognition.continuous = true;
-        this.voiceRecognition.interimResults = false;
-
-        this.voiceRecognition.onstart = () => {
-            this.isVoiceEnabled = true;
-            this.voiceStatus.textContent = '正在识别...';
-            this.voiceStatus.style.color = '#4CAF50';
-        };
-
-        this.voiceRecognition.onresult = (event) => {
-            const transcript = Array.from(event.results)
-                .map(result => result[0].transcript)
-                .join('');
-            
-            // 检测关键词触发滚动
-            const keywords = ['下', '向下', '下一页', '继续', 'next', 'down'];
-            if (keywords.some(keyword => transcript.includes(keyword))) {
-                this.sendMessage({ type: 'scroll', action: 'down' });
-            }
-        };
-
-        this.voiceRecognition.onerror = (event) => {
-            console.error('语音识别错误:', event.error);
-            this.voiceStatus.textContent = `错误: ${event.error}`;
-            this.voiceStatus.style.color = '#f44336';
-        };
-
-        this.voiceRecognition.onend = () => {
-            if (this.isVoiceEnabled) {
-                // 自动重新开始
-                this.voiceRecognition.start();
-            } else {
-                this.voiceStatus.textContent = '已停止';
-                this.voiceStatus.style.color = '#666';
-            }
-        };
-    }
-
-    startVoiceRecognition() {
-        if (this.voiceRecognition && !this.isVoiceEnabled) {
-            this.voiceRecognition.start();
-            this.voiceRecognitionCheckbox.checked = true;
-        }
-    }
-
-    stopVoiceRecognition() {
-        this.isVoiceEnabled = false;
-        if (this.voiceRecognition) {
-            this.voiceRecognition.stop();
-        }
-        this.voiceRecognitionCheckbox.checked = false;
     }
 
     sendMessage(message) {
