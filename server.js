@@ -138,7 +138,7 @@ const clients = {
 let state = {
     content: '',
     fontSize: 80,
-    lineHeight: 1.5,
+    lineHeight: 2.5,
     scrollSpeed: 30,
     autoScroll: false,
     wordWrap: true

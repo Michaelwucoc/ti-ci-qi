@@ -3,7 +3,7 @@ class TeleprompterDisplay {
     constructor() {
         this.content = '';
         this.fontSize = 80;
-        this.lineHeight = 1.5;
+        this.lineHeight = 2.5;
         this.scrollSpeed = 30;
         this.isScrolling = false;
         this.scrollInterval = null;

@@ -7,7 +7,7 @@ class TeleprompterControl {
         this.autoScroll = false;
         this.scrollSpeed = 30;
         this.fontSize = 80;
-        this.lineHeight = 1.5;
+        this.lineHeight = 2.5;
         this.content = '';
         this.currentScrollInfo = null;
         this.previewScale = 0.3; // 预览缩放比例（30%）
@@ -572,7 +572,7 @@ class TeleprompterControl {
         
         // 恢复设置
         this.fontSize = cacheData.fontSize || 80;
-        this.lineHeight = cacheData.lineHeight || 1.5;
+        this.lineHeight = cacheData.lineHeight || 2.5;
         this.scrollSpeed = cacheData.scrollSpeed || 30;
         this.autoScroll = cacheData.autoScroll || false;
         this.wordWrap = cacheData.wordWrap !== undefined ? cacheData.wordWrap : true;
