@@ -8,6 +8,12 @@ const PORT = 8080;
 
 // 创建HTTP服务器
 const server = http.createServer((req, res) => {
+    // 处理 API 请求
+    if (req.url.startsWith('/api/samples')) {
+        handleSamplesAPI(req, res);
+        return;
+    }
+
     let filePath = '.' + req.url;
     if (filePath === './') {
         filePath = './control.html';
@@ -29,7 +35,8 @@ const server = http.createServer((req, res) => {
         '.ttf': 'application/font-ttf',
         '.eot': 'application/vnd.ms-fontobject',
         '.otf': 'application/font-otf',
-        '.wasm': 'application/wasm'
+        '.wasm': 'application/wasm',
+        '.txt': 'text/plain'
     };
 
     const contentType = mimeTypes[extname] || 'application/octet-stream';
@@ -49,6 +56,74 @@ const server = http.createServer((req, res) => {
         }
     });
 });
+
+// 处理 sample 文件 API
+function handleSamplesAPI(req, res) {
+    const sampleDir = path.join(__dirname, 'sample');
+    
+    // 设置 CORS 头
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+
+    if (req.method === 'GET') {
+        const urlParts = req.url.split('/');
+        
+        // GET /api/samples - 列出所有 txt 文件
+        if (urlParts.length === 3 || (urlParts.length === 4 && urlParts[3] === '')) {
+            fs.readdir(sampleDir, (err, files) => {
+                if (err) {
+                    if (err.code === 'ENOENT') {
+                        // sample 文件夹不存在，返回空数组
+                        res.writeHead(200);
+                        res.end(JSON.stringify({ files: [] }), 'utf-8');
+                    } else {
+                        res.writeHead(500);
+                        res.end(JSON.stringify({ error: err.message }), 'utf-8');
+                    }
+                    return;
+                }
+                
+                // 过滤出 .txt 文件
+                const txtFiles = files.filter(file => file.toLowerCase().endsWith('.txt'));
+                res.writeHead(200);
+                res.end(JSON.stringify({ files: txtFiles }), 'utf-8');
+            });
+        }
+        // GET /api/samples/:filename - 读取指定文件内容
+        else if (urlParts.length === 4 && urlParts[3]) {
+            const filename = decodeURIComponent(urlParts[3]);
+            // 安全检查：确保文件名只包含安全字符，防止路径遍历攻击
+            if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+                res.writeHead(400);
+                res.end(JSON.stringify({ error: '无效的文件名' }), 'utf-8');
+                return;
+            }
+            
+            const filePath = path.join(sampleDir, filename);
+            fs.readFile(filePath, 'utf-8', (err, content) => {
+                if (err) {
+                    if (err.code === 'ENOENT') {
+                        res.writeHead(404);
+                        res.end(JSON.stringify({ error: '文件未找到' }), 'utf-8');
+                    } else {
+                        res.writeHead(500);
+                        res.end(JSON.stringify({ error: err.message }), 'utf-8');
+                    }
+                    return;
+                }
+                
+                res.writeHead(200);
+                res.end(JSON.stringify({ content: content, filename: filename }), 'utf-8');
+            });
+        } else {
+            res.writeHead(400);
+            res.end(JSON.stringify({ error: '无效的请求' }), 'utf-8');
+        }
+    } else {
+        res.writeHead(405);
+        res.end(JSON.stringify({ error: '方法不允许' }), 'utf-8');
+    }
+}
 
 // 创建WebSocket服务器
 const wss = new WebSocket.Server({ server });

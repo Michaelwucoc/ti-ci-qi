@@ -24,6 +24,7 @@ class TeleprompterControl {
         this.loadCaches();
         this.updateCacheList();
         this.loadContent();
+        this.loadSampleFiles();
     }
 
     setupElements() {
@@ -31,6 +32,10 @@ class TeleprompterControl {
         this.contentInput = document.getElementById('content-input');
         this.updateContentBtn = document.getElementById('update-content');
         this.clearContentBtn = document.getElementById('clear-content');
+        
+        // 内置文章选择
+        this.sampleFilesSelect = document.getElementById('sample-files');
+        this.loadSampleBtn = document.getElementById('load-sample');
         
         // 滚动控制
         this.scrollSpeedSlider = document.getElementById('scroll-speed');
@@ -193,6 +198,15 @@ class TeleprompterControl {
         // 内容输入变化时更新预览
         this.contentInput.addEventListener('input', () => {
             this.updatePreview();
+        });
+        
+        // 内置文章加载
+        this.loadSampleBtn.addEventListener('click', () => this.loadSampleFile());
+        this.sampleFilesSelect.addEventListener('change', () => {
+            // 选择文件后自动加载
+            if (this.sampleFilesSelect.value) {
+                this.loadSampleFile();
+            }
         });
         
         // 缓存控制
@@ -624,6 +638,68 @@ class TeleprompterControl {
         this.cacheList.value = trimmedNewName;
         
         alert(`缓存已从 "${oldName}" 重命名为 "${trimmedNewName}"`);
+    }
+
+    // 加载 sample 文件列表
+    async loadSampleFiles() {
+        try {
+            const response = await fetch('/api/samples');
+            const data = await response.json();
+            
+            if (data.files && data.files.length > 0) {
+                // 清空现有选项（保留第一个默认选项）
+                this.sampleFilesSelect.innerHTML = '<option value="">-- 选择内置文章 --</option>';
+                
+                // 添加文件选项
+                data.files.forEach(filename => {
+                    const option = document.createElement('option');
+                    option.value = filename;
+                    option.textContent = filename.replace('.txt', '');
+                    this.sampleFilesSelect.appendChild(option);
+                });
+            } else {
+                // 如果没有文件，显示提示
+                this.sampleFilesSelect.innerHTML = '<option value="">-- 暂无内置文章 --</option>';
+            }
+        } catch (error) {
+            console.error('加载内置文章列表失败:', error);
+            this.sampleFilesSelect.innerHTML = '<option value="">-- 加载失败 --</option>';
+        }
+    }
+
+    // 加载选中的 sample 文件内容
+    async loadSampleFile() {
+        const filename = this.sampleFilesSelect.value;
+        if (!filename) {
+            alert('请先选择要加载的内置文章');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/samples/${encodeURIComponent(filename)}`);
+            const data = await response.json();
+            
+            if (data.error) {
+                alert(`加载失败: ${data.error}`);
+                return;
+            }
+
+            // 确认是否覆盖当前内容
+            if (this.contentInput.value && !confirm('加载内置文章将覆盖当前内容，是否继续？')) {
+                return;
+            }
+
+            // 加载内容
+            this.content = data.content || '';
+            this.contentInput.value = this.content;
+            this.updatePreview();
+            this.updateContent();
+            
+            alert(`已加载内置文章: ${data.filename}`);
+        } catch (error) {
+            console.error('加载内置文章失败:', error);
+            alert(`加载失败: ${error.message}`);
+        }
     }
 }
 

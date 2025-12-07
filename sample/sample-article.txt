@@ -1,0 +1,11 @@
+This is a sample article in English.
+
+You can add any text files to the sample folder.
+
+The teleprompter will automatically scan all .txt files in the sample folder.
+
+You can select and load these files through the "Built-in Articles" dropdown menu on the control page.
+
+Each paragraph separated by a line break will be displayed as an independent paragraph.
+
+Enjoy using the teleprompter!
